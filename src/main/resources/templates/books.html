@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>도서 검색</title>
+	<style>
+		:root {
+			color: #1b1f23;
+			font-family: Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+			background: #f4f6f8;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+		}
+
+		main {
+			width: min(1120px, calc(100% - 32px));
+			margin: 0 auto;
+			padding: 40px 0 56px;
+		}
+
+		header {
+			margin-bottom: 24px;
+		}
+
+		h1 {
+			margin: 0 0 8px;
+			font-size: 32px;
+			line-height: 1.25;
+		}
+
+		p {
+			margin: 0;
+			color: #586069;
+		}
+
+		form {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) 120px auto;
+			gap: 10px;
+			margin-bottom: 20px;
+		}
+
+		input,
+		select,
+		button {
+			height: 44px;
+			border: 1px solid #c9d1d9;
+			border-radius: 6px;
+			font-size: 15px;
+		}
+
+		input,
+		select {
+			width: 100%;
+			padding: 0 12px;
+			background: #ffffff;
+			color: #1b1f23;
+		}
+
+		button,
+		.button {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			min-width: 88px;
+			padding: 0 16px;
+			border: 1px solid #0969da;
+			border-radius: 6px;
+			background: #0969da;
+			color: #ffffff;
+			font-weight: 700;
+			text-decoration: none;
+			cursor: pointer;
+		}
+
+		.summary {
+			display: flex;
+			justify-content: space-between;
+			gap: 16px;
+			margin-bottom: 12px;
+			font-size: 14px;
+		}
+
+		.table-wrap {
+			overflow-x: auto;
+			border: 1px solid #d8dee4;
+			border-radius: 8px;
+			background: #ffffff;
+		}
+
+		table {
+			width: 100%;
+			min-width: 860px;
+			border-collapse: collapse;
+		}
+
+		th,
+		td {
+			padding: 13px 14px;
+			border-bottom: 1px solid #d8dee4;
+			text-align: left;
+			vertical-align: middle;
+			font-size: 14px;
+		}
+
+		th {
+			background: #f6f8fa;
+			font-weight: 700;
+		}
+
+		tr:last-child td {
+			border-bottom: 0;
+		}
+
+		.empty {
+			padding: 36px 16px;
+			border: 1px solid #d8dee4;
+			border-radius: 8px;
+			background: #ffffff;
+			text-align: center;
+		}
+
+		.pagination {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 12px;
+			margin-top: 20px;
+		}
+
+		.pagination span {
+			min-width: 120px;
+			text-align: center;
+			font-weight: 700;
+		}
+
+		.button[aria-disabled="true"] {
+			border-color: #d8dee4;
+			background: #d8dee4;
+			color: #6e7781;
+			pointer-events: none;
+		}
+
+		@media (max-width: 680px) {
+			main {
+				width: min(100% - 24px, 1120px);
+				padding-top: 28px;
+			}
+
+			h1 {
+				font-size: 26px;
+			}
+
+			form {
+				grid-template-columns: 1fr;
+			}
+
+			.summary {
+				flex-direction: column;
+				gap: 6px;
+			}
+		}
+	</style>
+</head>
+<body>
+<main>
+	<header>
+		<h1>도서 검색</h1>
+		<p>도서명 부분 일치 기준으로 검색합니다.</p>
+	</header>
+
+	<form method="get" action="/books">
+		<input type="search" name="query" placeholder="도서명 입력" th:value="${query}" aria-label="도서명">
+		<select name="size" aria-label="페이지 크기">
+			<option value="10" th:selected="${pageSize == 10}">10개</option>
+			<option value="20" th:selected="${pageSize == 20}">20개</option>
+			<option value="50" th:selected="${pageSize == 50}">50개</option>
+		</select>
+		<button type="submit">검색</button>
+	</form>
+
+	<section th:if="${requestedSearch and !blankQuery}">
+		<div class="summary">
+			<span th:text="|전체 ${booksPage.totalElements}건|">전체 0건</span>
+			<span th:text="|${booksPage.number + 1} / ${booksPage.totalPages == 0 ? 1 : booksPage.totalPages} 페이지|">1 / 1 페이지</span>
+		</div>
+
+		<div class="empty" th:if="${booksPage.empty}">
+			<p>검색 결과가 없습니다.</p>
+		</div>
+
+		<div class="table-wrap" th:if="${!booksPage.empty}">
+			<table>
+				<thead>
+				<tr>
+					<th>도서명</th>
+					<th>저자</th>
+					<th>출판사</th>
+					<th>분류</th>
+					<th>출간일</th>
+					<th>ISBN</th>
+					<th>가격</th>
+					<th>재고</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="book : ${books}">
+					<td th:text="${book.title}">도서명</td>
+					<td th:text="${book.author}">저자</td>
+					<td th:text="${book.publisher}">출판사</td>
+					<td th:text="${book.category}">분류</td>
+					<td th:text="${book.publishedDate}">2024-01-01</td>
+					<td th:text="${book.isbn}">9780000000000</td>
+					<td th:text="${#numbers.formatInteger(book.price, 1, 'COMMA')}">15,000</td>
+					<td th:text="${book.stock}">1</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<nav class="pagination" aria-label="페이지 이동">
+			<a class="button"
+			   th:href="@{/books(query=${query}, size=${pageSize}, page=${booksPage.number - 1})}"
+			   th:attr="aria-disabled=${!booksPage.hasPrevious()}">이전</a>
+			<span th:text="|${booksPage.number + 1} 페이지|">1 페이지</span>
+			<a class="button"
+			   th:href="@{/books(query=${query}, size=${pageSize}, page=${booksPage.number + 1})}"
+			   th:attr="aria-disabled=${!booksPage.hasNext()}">다음</a>
+		</nav>
+	</section>
+
+	<section class="empty" th:if="${blankQuery}">
+		<p>검색어를 입력해 주세요.</p>
+	</section>
+</main>
+</body>
+</html>
