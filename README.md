@@ -1,24 +1,39 @@
 ## 실행 방법
-- `./gradlew bootRun` 명령으로 9070 포트 실행
-- `./gradlew test` 명령으로 JUnit 5 테스트 실행
-- H2 인메모리 DB와 `ddl-auto: create-drop` 기반 스키마 재생성
 
-## CSV 적재
-- 애플리케이션 기동 시 저장소 루트 `books.csv` 자동 적재
-- 기존 `books` 데이터 삭제 후 CSV 행 일괄 저장
-- 헤더, 필수값, 날짜, 숫자 형식 검증
+- 실행 편의를 위해 Dockerfile을 추가했습니다.
 
-## DB 스키마 및 인덱스
-- 단일 `books` 테이블 중심 도서 데이터 모델
-- `title`, `author`, `publisher`, `category`, `published_date`, `isbn`, `price`, `stock` 컬럼 구성
-- 도서명 검색용 `idx_books_title` 인덱스 구성
+```bash
+# 테스트 없이 이미지 빌드
+docker build -t pretask-book .
 
-## 검색 및 Pagination
-- 도서명 부분 일치 검색과 `ContainingIgnoreCase` Repository 메서드 활용
-- `Pageable` 기반 페이지 번호, 페이지 크기, 전체 결과 수, 전체 페이지 수 제공
-- 검색 조건 유지 기반 이전/다음 페이지 이동
+# 애플리케이션 실행
+docker run --rm -p 9070:9070 pretask-book
+```
 
-## 설계 의도
-- `Controller -> Service -> Repository` 계층 분리
-- CSV 적재 로직과 검색 로직 분리
-- 검색어 누락, 잘못된 페이지 파라미터, 결과 없음의 빈 화면 처리
+## 사용한 기술
+
+- SSR 구조
+    - Spring + Thymeleaf
+- Docker, H2
+
+## 구현한 범위
+
+- CSV 파일을 이용한 DB 초기화
+- 도서명 검색, 페이지네이션, title 인덱스 설정
+
+## 구현하지 못했거나 의도적으로 생략한 부분
+
+- 테이블 구조 개선 관련 부분
+    - 요구사항과 구현 범위를 고려해 단일 books 테이블로 구성
+- 운영용 DB 대신 H2 DB 사용
+
+## 시간이 더 있었다면 개선하고 싶은 부분
+    
+- CSV 로드는 현재 정해진 CSV 형식에서 최소한의 깨짐만 방어한 수준
+    - 데이터셋을 분석한 후, 예상 가능한 엣지 케이스를 추가로 방어하고 싶다.
+- 테이블 구조 개선 관련 부분
+    - 데이터 구조나 MySQL에서의 데이터 분포를 활용해 데이터셋 특징을 파악하고 개선하고 싶다.
+- 시간 분배가 아쉬워 구현 단계에서의 AI Agent 활용이 부족했다.
+    - 디렉터리 구조나 AGENTS.md 작성이 아쉬워 프로젝트 구조가 아쉽다.
+- LIKE 연산은 데이터가 많아질수록 검색 성능이 떨어질 수 있다고 생각한다.
+    - full-text 검색은 RDBMS로도 가능하지만, Elasticsearch 같은 전문 검색 엔진 사용도 좋아 보인다.
